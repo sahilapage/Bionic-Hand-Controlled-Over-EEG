@@ -3,12 +3,15 @@ import numpy as np
 import mujoco
 import mujoco.viewer
 import gymnasium as gym
-
+from gymnasium import spaces
 
 MODEL_PATH = "mjcf/scene.xml"
-CTRL_LOW = -1.57079633
-CTRL_HIGH = 1.57079633
+CTRL_LOW = -1.57079633  # -pi/2
+CTRL_HIGH = 1.57079633  # pi/2
 CTRL_STEPS = 10   # physics steps per action
+
+motor_qpos_addr = [0, 12, 17, 29, 34, 46, 51, 63]
+motor_qvel_addr = [0, 10, 14, 24, 28, 38, 42, 52]
 
 def scale_action(action):
     action = np.clip(action, -1.0, 1.0)
@@ -52,22 +55,19 @@ class HandEnv(gym.Env):
 
         mujoco.mj_resetData(self.model, self.data)
 
-        # Randomize initial pose slightly
-        self.data.qpos[:] += np.random.uniform(
-            -0.05, 0.05, size=self.model.nq
-        )
+        for idx in motor_qpos_addr:
+            self.data.qpos[idx] = np.random.uniform(CTRL_LOW, CTRL_HIGH)
 
         self.step_count = 0
 
         obs = self._get_obs()
         return obs, {}
 
-
     def _is_terminated(self):
-        if np.any(np.abs(self.data.qpos) > 3.0):
+        finger_positions = self.data.qpos[motor_qpos_addr]
+        if np.any(np.abs(finger_positions) > 3.0):
             return True
         return False
-
 
     def step(self, action):
         # Scale action
@@ -93,11 +93,33 @@ class HandEnv(gym.Env):
         return np.concatenate([
             self.data.qpos.copy(),
             self.data.qvel.copy()
+        ])
 
     def _compute_reward(self):
-        vel_penalty = np.sum(self.data.qvel ** 2)
-        ctrl_penalty = np.sum(self.data.ctrl ** 2)
-        return -0.001 * vel_penalty - 0.0001 * ctrl_penalty
+        correct_position = np.array([-0.157, 0.848, -0.581, 0.456, 1.57, -1.57, 1.57, -1.57])
+
+        current_position = self.data.qpos[motor_qpos_addr]
+
+        current_velocity = self.data.qvel[motor_qvel_addr]
+
+        error_per_finger = np.abs(current_position - correct_position)
+        l2_normalised_error = np.linalg.norm(error_per_finger)
+        worst_finger_error = np.max(error_per_finger)
+        max_velocity = np.max(current_velocity)
+        reward_for_position = 10 * np.exp(0.5 * -l2_normalised_error)   # 0.5 is the "harshness", max value for position reward is 10
+        
+        if worst_finger_error < 0.05:
+            bonus = 100
+        elif worst_finger_error < 0.1:
+            bonus = 20.0
+        else:
+            bonus = 0.0
+
+        velocity_penalty = -0.0001 * np.sum(np.square(current_velocity)) 
+
+        total_reward = bonus + reward_for_position + velocity_penalty
+        
+        return total_reward
 
     def render(self):
         if self.viewer is None:
@@ -118,14 +140,22 @@ if __name__ == "__main__":
 
     obs, _ = env.reset()
     print("Observation shape:", obs.shape)
-
-    for step in range(1000):
+    episode_reward = 0.0
+    for step in range(1000):    
         action = env.action_space.sample()
         obs, reward, done, trunc, _ = env.step(action)
+        episode_reward += reward
+        # print(reward)
+        
         time.sleep(0.01)
 
-        if step % 100 == 0:
-            print(f"step={step}, reward={reward:.4f}")
+        if done or trunc:
+            print("\n -------- process has been reset due to end of episode or unexpected movement -------- ")
+            print(f"episode reward: {episode_reward} | number of steps: {step}")
+            episode_reward = 0 
+            obs, _ = env.reset()
+
+        # if step % 100 == 0:
+        #     print(f"step={step}, reward={reward:.4f}")
 
     env.close()
-
