@@ -8,7 +8,7 @@ from gymnasium import spaces
 MODEL_PATH = "mjcf/scene.xml"
 CTRL_LOW = -1.57079633  # -pi/2
 CTRL_HIGH = 1.57079633  # pi/2
-CTRL_STEPS = 10   # physics steps per action
+CTRL_STEPS = 5   # physics steps per action
 
 motor_qpos_addr = [0, 12, 17, 29, 34, 46, 51, 63]
 motor_qvel_addr = [0, 10, 14, 24, 28, 38, 42, 52]
@@ -39,7 +39,9 @@ class HandEnv(gym.Env):
         )
 
         # Observation space
-        obs_dim = self.model.nq + self.model.nv
+        self.n_act = len(motor_qpos_addr)
+        obs_dim = self.n_act * 3
+
         self.observation_space = spaces.Box(
             low=-np.inf,
             high=np.inf,
@@ -52,16 +54,15 @@ class HandEnv(gym.Env):
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-
         mujoco.mj_resetData(self.model, self.data)
 
         for idx in motor_qpos_addr:
-            self.data.qpos[idx] = np.random.uniform(CTRL_LOW, CTRL_HIGH)
+            self.data.qpos[idx] = 0.0
+
+        self.target_qpos = np.zeros(len(motor_qpos_addr), dtype=np.float32)
 
         self.step_count = 0
-
-        obs = self._get_obs()
-        return obs, {}
+        return self._get_obs(), {}
 
     def _is_terminated(self):
         finger_positions = self.data.qpos[motor_qpos_addr]
@@ -71,7 +72,8 @@ class HandEnv(gym.Env):
 
     def step(self, action):
         # Scale action
-        self.data.ctrl[:] = scale_action(action)
+        alpha = 0.2
+        self.data.ctrl[:] = (1 - alpha) * self.data.ctrl[:] + alpha * scale_action(action)
 
         # Step physics
         for _ in range(CTRL_STEPS):
@@ -90,12 +92,16 @@ class HandEnv(gym.Env):
         return obs, reward, terminated, truncated, {}
 
     def _get_obs(self):
-        return np.concatenate([
-            self.data.qpos.copy(),
-            self.data.qvel.copy()
-        ])
+        qpos = self.data.qpos[motor_qpos_addr].astype(np.float32)
+        qvel = self.data.qvel[motor_qvel_addr].astype(np.float32)
+        error = (self.target_qpos - qpos).astype(np.float32)
+
+        return np.concatenate([qpos, qvel, error]).astype(np.float32)
 
     def _compute_reward(self):
+
+        self.data.qvel[motor_qvel_addr] *= 0.95
+
         correct_position = np.array([-0.157, 0.848, -0.581, 0.456, 1.57, -1.57, 1.57, -1.57])
 
         current_position = self.data.qpos[motor_qpos_addr]
@@ -109,7 +115,7 @@ class HandEnv(gym.Env):
         reward_for_position = 10 * np.exp(0.5 * -l2_normalised_error)   # 0.5 is the "harshness", max value for position reward is 10
         
         if worst_finger_error < 0.05:
-            bonus = 100
+            bonus = 50
         elif worst_finger_error < 0.1:
             bonus = 20.0
         else:
