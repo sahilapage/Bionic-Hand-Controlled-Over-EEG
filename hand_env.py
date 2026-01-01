@@ -5,30 +5,21 @@ import mujoco.viewer
 import gymnasium as gym
 from gymnasium import spaces
 
-# --------------------------------------------------
-# Config
-# --------------------------------------------------
 MODEL_PATH = "mjcf/scene.xml"
-
-CTRL_LOW = -1.57079633   # -pi/2
-CTRL_HIGH = 1.57079633  # +pi/2
-CTRL_STEPS = 5          # physics steps per action
+CTRL_LOW = -1.57079633  # -pi/2
+CTRL_HIGH = 1.57079633  # pi/2
+CTRL_STEPS = 20  # physics steps per action
 
 motor_qpos_addr = [0, 12, 17, 29, 34, 46, 51, 63]
 motor_qvel_addr = [0, 10, 14, 24, 28, 38, 42, 52]
 
 N_MOTORS = len(motor_qpos_addr)
 
-# --------------------------------------------------
-# Utilities
-# --------------------------------------------------
 def scale_action(action):
     action = np.clip(action, -1.0, 1.0)
     return CTRL_LOW + (action + 1.0) * 0.5 * (CTRL_HIGH - CTRL_LOW)
 
-# --------------------------------------------------
-# Environment
-# --------------------------------------------------
+
 class HandEnv(gym.Env):
     metadata = {"render_modes": ["human"]}
 
@@ -38,10 +29,16 @@ class HandEnv(gym.Env):
         self.model = mujoco.MjModel.from_xml_path(MODEL_PATH)
         self.data = mujoco.MjData(self.model)
 
+        self.alpha = 0.2
         self.render_mode = render
         self.viewer = None
 
-        # Action space (8 motors)
+        self.target_qpos = np.array([
+        -0.157, 0.848, -0.581, 0.456,
+        1.57, -1.57, 1.57, -1.57
+        ], dtype=np.float32)
+
+        # Action space
         self.action_space = spaces.Box(
             low=-1.0,
             high=1.0,
@@ -49,8 +46,8 @@ class HandEnv(gym.Env):
             dtype=np.float32
         )
 
-        # Observation space: qpos + qvel + error
-        obs_dim = N_MOTORS * 3
+        # Observation space
+        obs_dim = len(motor_qpos_addr) * 3
         self.observation_space = spaces.Box(
             low=-np.inf,
             high=np.inf,
@@ -58,43 +55,40 @@ class HandEnv(gym.Env):
             dtype=np.float32
         )
 
-        self.max_steps = 150
         self.step_count = 0
+        self.max_steps = 150
 
-        # Peace sign target (✌️)
-        self.target_qpos = np.array([
-            -0.157, 0.848, -0.581, 0.456,
-             1.57, -1.57, 1.57, -1.57
-        ], dtype=np.float32)
-
-    # --------------------------------------------------
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
+
         mujoco.mj_resetData(self.model, self.data)
 
-        # Neutral pose
         for idx in motor_qpos_addr:
-            self.data.qpos[idx] = 0.0
+            self.data.qpos[idx] = np.random.uniform(CTRL_LOW, CTRL_HIGH)
 
         self.step_count = 0
-        return self._get_obs(), {}
 
-    # --------------------------------------------------
+        obs = self._get_obs()
+        return obs, {}
+
+    def _is_terminated(self):
+        finger_positions = self.data.qpos[motor_qpos_addr]
+        
+        if np.any(np.abs(finger_positions) > 1.57):
+            return True
+        
+        error = np.abs(self.data.qpos[motor_qpos_addr] - self.target_qpos)
+
+        if np.max(error) < 0.05:
+            return True
+        
+        return False
+
     def step(self, action):
-        alpha = 0.2
+        self.data.ctrl[:] = ((1 - self.alpha) * self.data.ctrl[:] + self.alpha * scale_action(action))      #low pass filter (allows smooth movemnt)
 
-        # Smooth control
-        self.data.ctrl[:] = (
-            (1 - alpha) * self.data.ctrl[:] +
-            alpha * scale_action(action)
-        )
-
-        # Physics stepping
         for _ in range(CTRL_STEPS):
             mujoco.mj_step(self.model, self.data)
-
-        # Velocity damping (post-physics)
-        self.data.qvel[motor_qvel_addr] *= 0.95
 
         self.step_count += 1
 
@@ -108,48 +102,37 @@ class HandEnv(gym.Env):
 
         return obs, reward, terminated, truncated, {}
 
-    # --------------------------------------------------
     def _get_obs(self):
-        qpos = self.data.qpos[motor_qpos_addr].astype(np.float32)
-        qvel = self.data.qvel[motor_qvel_addr].astype(np.float32)
+        qpos = self.data.qpos[motor_qpos_addr]
+        qvel = self.data.qvel[motor_qvel_addr]
         error = (self.target_qpos - qpos).astype(np.float32)
-        return np.concatenate([qpos, qvel, error])
+        return np.concatenate([qpos, qvel, error]).astype(np.float32)  
 
-    # --------------------------------------------------
     def _compute_reward(self):
-        pos = self.data.qpos[motor_qpos_addr]
-        vel = self.data.qvel[motor_qvel_addr]
+        correct_position = self.target_qpos
 
-        error = np.abs(pos - self.target_qpos)
-        l2_error = np.linalg.norm(error)
-        worst_error = np.max(error)
+        current_position = self.data.qpos[motor_qpos_addr]
 
-        # Dense shaping
-        position_reward = 5.0 * np.exp(-0.5 * l2_error)
+        current_velocity = self.data.qvel[motor_qvel_addr]
 
-        # Success bonus
-        bonus = 5.0 if worst_error < 0.05 else 0.0
+        error_per_finger = np.abs(current_position - correct_position)
+        l2_error = np.linalg.norm(error_per_finger)
+        l2_normalised_error = l2_error / np.sqrt(N_MOTORS)
+        worst_finger_error = np.max(error_per_finger)
+        max_velocity = np.max(current_velocity)
+        reward_for_position = 5.0 * np.exp(-0.5 * l2_normalised_error)   # 0.5 is the "harshness", max value for position reward is 10
+        
+        if worst_finger_error < 0.05:
+            bonus = 5
+        else:
+            bonus = 0.0
 
-        # Smoothness penalty
-        velocity_penalty = -0.001 * np.sum(vel ** 2)
+        velocity_penalty = -0.002 * np.sum(current_velocity ** 2)
 
-        return position_reward + bonus + velocity_penalty
+        total_reward = bonus + reward_for_position + velocity_penalty
+        
+        return total_reward
 
-    # --------------------------------------------------
-    def _is_terminated(self):
-        error = np.abs(self.data.qpos[motor_qpos_addr] - self.target_qpos)
-
-        # Success
-        if np.max(error) < 0.05:
-            return True
-
-        # Safety failure
-        if np.any(np.abs(self.data.qpos[motor_qpos_addr]) > 3.0):
-            return True
-
-        return False
-
-    # --------------------------------------------------
     def render(self):
         if self.viewer is None:
             self.viewer = mujoco.viewer.launch_passive(
@@ -157,28 +140,35 @@ class HandEnv(gym.Env):
             )
         self.viewer.sync()
 
-    # --------------------------------------------------
     def close(self):
         if self.viewer:
             self.viewer.close()
             self.viewer = None
 
 
-# --------------------------------------------------
-# Quick sanity test (optional)
-# --------------------------------------------------
+
 if __name__ == "__main__":
-    env = HandEnv(render=False)
+    env = HandEnv(render=True)
 
     obs, _ = env.reset()
     print("Observation shape:", obs.shape)
-
-    for _ in range(20):
+    episode_reward = 0.0
+    for step in range(1000):    
         action = env.action_space.sample()
         obs, reward, done, trunc, _ = env.step(action)
-        print(f"reward: {reward:.3f}")
+        episode_reward += reward
+        # print(reward)
+        
+        time.sleep(0.01)
 
         if done or trunc:
+            print("\n -------- process has been reset due to end of episode or unexpected movement -------- ")
+            print(f"episode reward: {episode_reward} | number of steps: {step}")
+            episode_reward = 0 
             obs, _ = env.reset()
+            
+
+        # if step % 100 == 0:
+        #     print(f"step={step}, reward={reward:.4f}")
 
     env.close()
