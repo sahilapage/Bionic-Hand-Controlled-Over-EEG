@@ -1,0 +1,2 @@
+source /home/vedant/Bidex_Hand_Project/eog_bioamp/build/gdbinit/symbols
+source /home/vedant/Bidex_Hand_Project/eog_bioamp/build/gdbinit/connect

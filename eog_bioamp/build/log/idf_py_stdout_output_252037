@@ -1,0 +1,28 @@
+Command: ninja flash
+[1/10] Performing build step for 'bootloader'
+[1/1] cd /home/vedant/Bidex_Hand_Project/eog_bioamp/build/bootloader/esp-idf/esptool_py && /home/vedant/.espressif/python_env/idf5.5_py3.10_env/bin/python /home/vedant/esp/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x1000 /home/vedant/Bidex_Hand_Project/eog_bioamp/build/bootloader/bootloader.bin
+Bootloader binary size 0x6680 bytes. 0x980 bytes (8%) free.
+[2/8] Building C object esp-idf/main/CMakeFiles/__idf_main.dir/eog_bioamp.c.obj
+[3/8] Linking C static library esp-idf/main/libmain.a
+[4/8] Generating esp-idf/esp_system/ld/sections.ld
+[5/8] Linking CXX executable eog_bioamp.elf
+[6/8] Generating binary image from built executable
+esptool.py v4.9.0
+Creating esp32 image...
+Merged 2 ELF sections
+Successfully created esp32 image.
+Generated /home/vedant/Bidex_Hand_Project/eog_bioamp/build/eog_bioamp.bin
+[7/8] cd /home/vedant/Bidex_Hand_Project/eog_bioamp/build/esp-idf/esptool_py && /home/vedant/.espressif/python_env/idf5.5_py3.10_env/bin/python /home/vedant/esp/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app /home/vedant/Bidex_Hand_Project/eog_bioamp/build/partition_table/partition-table.bin /home/vedant/Bidex_Hand_Project/eog_bioamp/build/eog_bioamp.bin
+eog_bioamp.bin binary size 0x2fe90 bytes. Smallest app partition is 0x100000 bytes. 0xd0170 bytes (81%) free.
+[7/8] cd /home/vedant/esp/esp-idf/components/esptool_py && /usr/bin/cmake -D IDF_PATH=/home/vedant/esp/esp-idf -D "SERIAL_TOOL=/home/vedant/.espressif/python_env/idf5.5_py3.10_env/bin/python;;/home/vedant/esp/esp-idf/components/esptool_py/esptool/esptool.py;--chip;esp32" -D "SERIAL_TOOL_ARGS=--before=default_reset;--after=hard_reset;write_flash;@flash_args" -D WORKING_DIRECTORY=/home/vedant/Bidex_Hand_Project/eog_bioamp/build -P /home/vedant/esp/esp-idf/components/esptool_py/run_serial_tool.cmake
+esptool.py --chip esp32 -p /dev/ttyUSB0 -b 460800 --before=default_reset --after=hard_reset write_flash --flash_mode dio --flash_freq 40m --flash_size 2MB 0x1000 bootloader/bootloader.bin 0x10000 eog_bioamp.bin 0x8000 partition_table/partition-table.bin
+esptool.py v4.9.0
+Serial port /dev/ttyUSB0
+Connecting...
+
+A serial exception error occurred: Could not configure port: (5, 'Input/output error')
+Note: This error originates from pySerial. It is likely not a problem with esptool, but with the hardware connection or drivers.
+For troubleshooting steps visit: https://docs.espressif.com/projects/esptool/en/latest/troubleshooting.html
+FAILED: CMakeFiles/flash /home/vedant/Bidex_Hand_Project/eog_bioamp/build/CMakeFiles/flash 
+cd /home/vedant/esp/esp-idf/components/esptool_py && /usr/bin/cmake -D IDF_PATH=/home/vedant/esp/esp-idf -D "SERIAL_TOOL=/home/vedant/.espressif/python_env/idf5.5_py3.10_env/bin/python;;/home/vedant/esp/esp-idf/components/esptool_py/esptool/esptool.py;--chip;esp32" -D "SERIAL_TOOL_ARGS=--before=default_reset;--after=hard_reset;write_flash;@flash_args" -D WORKING_DIRECTORY=/home/vedant/Bidex_Hand_Project/eog_bioamp/build -P /home/vedant/esp/esp-idf/components/esptool_py/run_serial_tool.cmake
+ninja: build stopped: subcommand failed.

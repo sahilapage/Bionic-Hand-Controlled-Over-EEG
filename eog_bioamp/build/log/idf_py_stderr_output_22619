@@ -1,0 +1,39 @@
+Command: /home/vedant/.espressif/python_env/idf5.5_py3.10_env/bin/python /home/vedant/esp/esp-idf/tools/idf_monitor.py -p /dev/ttyUSB0 -b 115200 --toolchain-prefix xtensa-esp32-elf- --target esp32 --revision 0 /home/vedant/Bidex_Hand_Project/eog_bioamp/build/eog_bioamp.elf /home/vedant/Bidex_Hand_Project/eog_bioamp/build/bootloader/bootloader.elf -m '/home/vedant/.espressif/python_env/idf5.5_py3.10_env/bin/python' '/home/vedant/esp/esp-idf/tools/idf.py'
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esp_idf_monitor/__main__.py", line 1, in <module>
+    from esp_idf_monitor.idf_monitor import main
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esp_idf_monitor/idf_monitor.py", line 39, in <module>
+    from esp_idf_monitor.base.argument_parser import get_parser
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esp_idf_monitor/base/argument_parser.py", line 11, in <module>
+    from .coredump import COREDUMP_DECODE_DISABLE, COREDUMP_DECODE_INFO
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esp_idf_monitor/base/coredump.py", line 11, in <module>
+    from .logger import Logger  # noqa: F401
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esp_idf_monitor/base/logger.py", line 8, in <module>
+    from esp_idf_panic_decoder import PcAddressDecoder
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esp_idf_panic_decoder/__init__.py", line 1, in <module>
+    from esp_idf_panic_decoder.pc_address_decoder import PcAddressDecoder  # noqa: F401
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esp_idf_panic_decoder/pc_address_decoder.py", line 8, in <module>
+    from .pc_address_matcher import PcAddressMatcher
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esp_idf_panic_decoder/pc_address_matcher.py", line 5, in <module>
+    from elftools.elf.elffile import ELFFile
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/elftools/elf/elffile.py", line 29, in <module>
+    from ..dwarf.dwarfinfo import DWARFInfo, DebugSectionDescriptor, DwarfConfig
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/elftools/dwarf/dwarfinfo.py", line 17, in <module>
+    from .structs import DWARFStructs
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/elftools/dwarf/structs.py", line 10, in <module>
+    from logging.config import valid_ident
+  File "/usr/lib/python3.10/logging/config.py", line 30, in <module>
+    import logging.handlers
+  File "/usr/lib/python3.10/logging/handlers.py", line 26, in <module>
+    import io, logging, socket, os, pickle, struct, time, re
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 879, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1012, in get_code
+  File "<frozen importlib._bootstrap_external>", line 672, in _compile_bytecode
+SystemError: non-string found in code slot

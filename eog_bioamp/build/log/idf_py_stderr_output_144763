@@ -1,0 +1,38 @@
+Command: ninja flash
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esptool/__main__.py", line 9, in <module>
+    esptool._main()
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esptool/__init__.py", line 1359, in _main
+    main()
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esptool/__init__.py", line 1063, in main
+    operation_func(esp, args)
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esptool/cmds.py", line 654, in write_flash
+    esp.flash_defl_block(block, seq, timeout=timeout)
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esptool/loader.py", line 127, in inner
+    return func(*args, **kwargs)
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esptool/loader.py", line 1186, in flash_defl_block
+    self.check_command(
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esptool/loader.py", line 506, in check_command
+    val, data = self.command(op, data, chk, timeout=timeout)
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esptool/loader.py", line 475, in command
+    p = self.read()
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esptool/loader.py", line 408, in read
+    return next(self._slip_reader)
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esptool/loader.py", line 1658, in slip_reader
+    waiting = port.inWaiting()
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/serial/serialutil.py", line 594, in inWaiting
+    return self.in_waiting
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/serial/serialposix.py", line 549, in in_waiting
+    s = fcntl.ioctl(self.fd, TIOCINQ, TIOCM_zero_str)
+OSError: [Errno 5] Input/output error
+CMake Error at run_serial_tool.cmake:67 (message):
+  
+  /home/vedant/.espressif/python_env/idf5.5_py3.10_env/bin/python;;/home/vedant/esp/esp-idf/components/esptool_py/esptool/esptool.py;--chip;esp32
+  failed.
+
+
+

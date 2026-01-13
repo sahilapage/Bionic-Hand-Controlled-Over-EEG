@@ -1,0 +1,48 @@
+Command: cmake -G Ninja -DPYTHON_DEPS_CHECKED=1 -DPYTHON=/home/vedant/.espressif/python_env/idf5.5_py3.10_env/bin/python -DESP_PLATFORM=1 -DCCACHE_ENABLE=0 /home/vedant/Bidex_Hand_Project/eog_bioamp
+-- IDF_TARGET is not set, guessed 'esp32' from sdkconfig '/home/vedant/Bidex_Hand_Project/eog_bioamp/sdkconfig'
+-- Found Git: /usr/bin/git (found version "2.34.1") 
+-- Minimal build - OFF
+-- The C compiler identification is GNU 14.2.0
+-- The CXX compiler identification is GNU 14.2.0
+-- The ASM compiler identification is GNU
+-- Found assembler: /home/vedant/.espressif/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/xtensa-esp32-elf-gcc
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /home/vedant/.espressif/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/xtensa-esp32-elf-gcc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /home/vedant/.espressif/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/xtensa-esp32-elf-g++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- git rev-parse returned 'fatal: not a git repository (or any of the parent directories): .git'
+-- Could not use 'git describe' to determine PROJECT_VER.
+-- Building ESP-IDF components for target esp32
+-- Project sdkconfig file /home/vedant/Bidex_Hand_Project/eog_bioamp/sdkconfig
+-- Compiler supported targets: xtensa-esp-elf
+-- Found Python3: /home/vedant/.espressif/python_env/idf5.5_py3.10_env/bin/python (found version "3.10.12") found components: Interpreter 
+-- Looking for pthread.h
+-- Looking for pthread.h - found
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- Performing Test C_COMPILER_SUPPORTS_WFORMAT_SIGNEDNESS
+-- Performing Test C_COMPILER_SUPPORTS_WFORMAT_SIGNEDNESS - Success
+-- USING O3
+-- App "eog_bioamp" version: 1
+-- Adding linker script /home/vedant/Bidex_Hand_Project/eog_bioamp/build/esp-idf/esp_system/ld/memory.ld
+-- Adding linker script /home/vedant/Bidex_Hand_Project/eog_bioamp/build/esp-idf/esp_system/ld/sections.ld.in
+-- Adding linker script /home/vedant/esp/esp-idf/components/esp_rom/esp32/ld/esp32.rom.ld
+-- Adding linker script /home/vedant/esp/esp-idf/components/esp_rom/esp32/ld/esp32.rom.api.ld
+-- Adding linker script /home/vedant/esp/esp-idf/components/esp_rom/esp32/ld/esp32.rom.libgcc.ld
+-- Adding linker script /home/vedant/esp/esp-idf/components/esp_rom/esp32/ld/esp32.rom.newlib-data.ld
+-- Adding linker script /home/vedant/esp/esp-idf/components/esp_rom/esp32/ld/esp32.rom.syscalls.ld
+-- Adding linker script /home/vedant/esp/esp-idf/components/esp_rom/esp32/ld/esp32.rom.libc-funcs.ld
+-- Adding linker script /home/vedant/esp/esp-idf/components/esp_rom/esp32/ld/esp32.rom.newlib-reent-funcs.ld
+-- Adding linker script /home/vedant/esp/esp-idf/components/soc/esp32/ld/esp32.peripherals.ld
+-- Components: app_trace app_update bootloader bootloader_support bt cmock console cxx driver efuse esp-tls esp_adc esp_app_format esp_bootloader_format esp_coex esp_common esp_driver_ana_cmpr esp_driver_bitscrambler esp_driver_cam esp_driver_dac esp_driver_gpio esp_driver_gptimer esp_driver_i2c esp_driver_i2s esp_driver_isp esp_driver_jpeg esp_driver_ledc esp_driver_mcpwm esp_driver_parlio esp_driver_pcnt esp_driver_ppa esp_driver_rmt esp_driver_sdio esp_driver_sdm esp_driver_sdmmc esp_driver_sdspi esp_driver_spi esp_driver_touch_sens esp_driver_tsens esp_driver_twai esp_driver_uart esp_driver_usb_serial_jtag esp_eth esp_event esp_gdbstub esp_hid esp_http_client esp_http_server esp_https_ota esp_https_server esp_hw_support esp_lcd esp_local_ctrl esp_mm esp_netif esp_netif_stack esp_partition esp_phy esp_pm esp_psram esp_ringbuf esp_rom esp_security esp_system esp_timer esp_vfs_console esp_wifi espcoredump esptool_py fatfs freertos hal heap http_parser idf_test ieee802154 json log lwip main mbedtls mqtt newlib nvs_flash nvs_sec_provider openthread partition_table perfmon protobuf-c protocomm pthread rt sdmmc soc spi_flash spiffs tcp_transport ulp unity usb vfs wear_levelling wifi_provisioning wpa_supplicant xtensa
+-- Component paths: /home/vedant/esp/esp-idf/components/app_trace /home/vedant/esp/esp-idf/components/app_update /home/vedant/esp/esp-idf/components/bootloader /home/vedant/esp/esp-idf/components/bootloader_support /home/vedant/esp/esp-idf/components/bt /home/vedant/esp/esp-idf/components/cmock /home/vedant/esp/esp-idf/components/console /home/vedant/esp/esp-idf/components/cxx /home/vedant/esp/esp-idf/components/driver /home/vedant/esp/esp-idf/components/efuse /home/vedant/esp/esp-idf/components/esp-tls /home/vedant/esp/esp-idf/components/esp_adc /home/vedant/esp/esp-idf/components/esp_app_format /home/vedant/esp/esp-idf/components/esp_bootloader_format /home/vedant/esp/esp-idf/components/esp_coex /home/vedant/esp/esp-idf/components/esp_common /home/vedant/esp/esp-idf/components/esp_driver_ana_cmpr /home/vedant/esp/esp-idf/components/esp_driver_bitscrambler /home/vedant/esp/esp-idf/components/esp_driver_cam /home/vedant/esp/esp-idf/components/esp_driver_dac /home/vedant/esp/esp-idf/components/esp_driver_gpio /home/vedant/esp/esp-idf/components/esp_driver_gptimer /home/vedant/esp/esp-idf/components/esp_driver_i2c /home/vedant/esp/esp-idf/components/esp_driver_i2s /home/vedant/esp/esp-idf/components/esp_driver_isp /home/vedant/esp/esp-idf/components/esp_driver_jpeg /home/vedant/esp/esp-idf/components/esp_driver_ledc /home/vedant/esp/esp-idf/components/esp_driver_mcpwm /home/vedant/esp/esp-idf/components/esp_driver_parlio /home/vedant/esp/esp-idf/components/esp_driver_pcnt /home/vedant/esp/esp-idf/components/esp_driver_ppa /home/vedant/esp/esp-idf/components/esp_driver_rmt /home/vedant/esp/esp-idf/components/esp_driver_sdio /home/vedant/esp/esp-idf/components/esp_driver_sdm /home/vedant/esp/esp-idf/components/esp_driver_sdmmc /home/vedant/esp/esp-idf/components/esp_driver_sdspi /home/vedant/esp/esp-idf/components/esp_driver_spi /home/vedant/esp/esp-idf/components/esp_driver_touch_sens /home/vedant/esp/esp-idf/components/esp_driver_tsens /home/vedant/esp/esp-idf/components/esp_driver_twai /home/vedant/esp/esp-idf/components/esp_driver_uart /home/vedant/esp/esp-idf/components/esp_driver_usb_serial_jtag /home/vedant/esp/esp-idf/components/esp_eth /home/vedant/esp/esp-idf/components/esp_event /home/vedant/esp/esp-idf/components/esp_gdbstub /home/vedant/esp/esp-idf/components/esp_hid /home/vedant/esp/esp-idf/components/esp_http_client /home/vedant/esp/esp-idf/components/esp_http_server /home/vedant/esp/esp-idf/components/esp_https_ota /home/vedant/esp/esp-idf/components/esp_https_server /home/vedant/esp/esp-idf/components/esp_hw_support /home/vedant/esp/esp-idf/components/esp_lcd /home/vedant/esp/esp-idf/components/esp_local_ctrl /home/vedant/esp/esp-idf/components/esp_mm /home/vedant/esp/esp-idf/components/esp_netif /home/vedant/esp/esp-idf/components/esp_netif_stack /home/vedant/esp/esp-idf/components/esp_partition /home/vedant/esp/esp-idf/components/esp_phy /home/vedant/esp/esp-idf/components/esp_pm /home/vedant/esp/esp-idf/components/esp_psram /home/vedant/esp/esp-idf/components/esp_ringbuf /home/vedant/esp/esp-idf/components/esp_rom /home/vedant/esp/esp-idf/components/esp_security /home/vedant/esp/esp-idf/components/esp_system /home/vedant/esp/esp-idf/components/esp_timer /home/vedant/esp/esp-idf/components/esp_vfs_console /home/vedant/esp/esp-idf/components/esp_wifi /home/vedant/esp/esp-idf/components/espcoredump /home/vedant/esp/esp-idf/components/esptool_py /home/vedant/esp/esp-idf/components/fatfs /home/vedant/esp/esp-idf/components/freertos /home/vedant/esp/esp-idf/components/hal /home/vedant/esp/esp-idf/components/heap /home/vedant/esp/esp-idf/components/http_parser /home/vedant/esp/esp-idf/components/idf_test /home/vedant/esp/esp-idf/components/ieee802154 /home/vedant/esp/esp-idf/components/json /home/vedant/esp/esp-idf/components/log /home/vedant/esp/esp-idf/components/lwip /home/vedant/Bidex_Hand_Project/eog_bioamp/main /home/vedant/esp/esp-idf/components/mbedtls /home/vedant/esp/esp-idf/components/mqtt /home/vedant/esp/esp-idf/components/newlib /home/vedant/esp/esp-idf/components/nvs_flash /home/vedant/esp/esp-idf/components/nvs_sec_provider /home/vedant/esp/esp-idf/components/openthread /home/vedant/esp/esp-idf/components/partition_table /home/vedant/esp/esp-idf/components/perfmon /home/vedant/esp/esp-idf/components/protobuf-c /home/vedant/esp/esp-idf/components/protocomm /home/vedant/esp/esp-idf/components/pthread /home/vedant/esp/esp-idf/components/rt /home/vedant/esp/esp-idf/components/sdmmc /home/vedant/esp/esp-idf/components/soc /home/vedant/esp/esp-idf/components/spi_flash /home/vedant/esp/esp-idf/components/spiffs /home/vedant/esp/esp-idf/components/tcp_transport /home/vedant/esp/esp-idf/components/ulp /home/vedant/esp/esp-idf/components/unity /home/vedant/esp/esp-idf/components/usb /home/vedant/esp/esp-idf/components/vfs /home/vedant/esp/esp-idf/components/wear_levelling /home/vedant/esp/esp-idf/components/wifi_provisioning /home/vedant/esp/esp-idf/components/wpa_supplicant /home/vedant/esp/esp-idf/components/xtensa
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/vedant/Bidex_Hand_Project/eog_bioamp/build

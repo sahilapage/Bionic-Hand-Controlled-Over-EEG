@@ -1,0 +1,30 @@
+Command: ninja flash
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esptool/__main__.py", line 9, in <module>
+    esptool._main()
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esptool/__init__.py", line 1359, in _main
+    main()
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esptool/__init__.py", line 815, in main
+    esp = esp or get_default_connected_device(
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esptool/__init__.py", line 1240, in get_default_connected_device
+    _esp.connect(before, connect_attempts)
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esptool/loader.py", line 726, in connect
+    last_error = self._connect_attempt(reset_strategy, mode)
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/esptool/loader.py", line 600, in _connect_attempt
+    self._port.reset_input_buffer()
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/serial/serialposix.py", line 683, in reset_input_buffer
+    self._reset_input_buffer()
+  File "/home/vedant/.espressif/python_env/idf5.5_py3.10_env/lib/python3.10/site-packages/serial/serialposix.py", line 677, in _reset_input_buffer
+    termios.tcflush(self.fd, termios.TCIFLUSH)
+termios.error: (5, 'Input/output error')
+CMake Error at run_serial_tool.cmake:67 (message):
+  
+  /home/vedant/.espressif/python_env/idf5.5_py3.10_env/bin/python;;/home/vedant/esp/esp-idf/components/esptool_py/esptool/esptool.py;--chip;esp32
+  failed.
+
+
+
