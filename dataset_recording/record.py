@@ -39,7 +39,7 @@ print(f"📁 Recording to {session}")
 # ================= PIPELINE =================
 pipeline = dai.Pipeline()
 
-# -------- RGB CAMERA (CENTER) --------
+# -------- RGB CAMERA --------
 cam_rgb = pipeline.create(dai.node.ColorCamera)
 cam_rgb.setBoardSocket(dai.CameraBoardSocket.CAM_A)
 cam_rgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P)
@@ -66,11 +66,19 @@ mono_r.setFps(FPS)
 
 # -------- STEREO DEPTH --------
 stereo = pipeline.create(dai.node.StereoDepth)
-stereo.setDefaultProfilePreset(dai.node.StereoDepth.PresetMode.DEFAULT)
+
+# 🔑 CRITICAL FIXES
+stereo.setDefaultProfilePreset(
+    dai.node.StereoDepth.PresetMode.HIGH_ACCURACY
+)
 stereo.setDepthAlign(dai.CameraBoardSocket.CAM_A)
 stereo.setLeftRightCheck(True)
+stereo.setSubpixel(True)
 
-# Dataset-safe filtering only
+# Reject low-confidence hallucinations
+stereo.initialConfig.setConfidenceThreshold(200)
+
+# Safe filtering only
 stereo.initialConfig.setMedianFilter(dai.MedianFilter.KERNEL_7x7)
 
 mono_l.out.link(stereo.left)
@@ -83,7 +91,7 @@ stereo.depth.link(xout_depth.input)
 # ================= RUN =================
 with dai.Device(pipeline) as device:
 
-    # -------- INTRINSICS (ONCE) --------
+    # -------- INTRINSICS --------
     calib = device.readCalibration()
     K = calib.getCameraIntrinsics(
         dai.CameraBoardSocket.CAM_A,
@@ -105,7 +113,6 @@ with dai.Device(pipeline) as device:
 
     print("✅ Saved intrinsics")
 
-    # -------- QUEUES --------
     q_rgb = device.getOutputQueue("rgb", maxSize=4, blocking=False)
     q_depth = device.getOutputQueue("depth", maxSize=4, blocking=False)
 
@@ -119,7 +126,6 @@ with dai.Device(pipeline) as device:
     print("\n🔴 RECORDING (press 'q' to stop)\n")
 
     while True:
-        # --- NON-BLOCKING, LATCHED STREAM HANDLING ---
         in_rgb = q_rgb.tryGet()
         if in_rgb is not None:
             rgb = in_rgb.getCvFrame()
@@ -127,34 +133,26 @@ with dai.Device(pipeline) as device:
 
         in_depth = q_depth.tryGet()
         if in_depth is not None:
-            depth_mm = in_depth.getFrame()
-            depth_m = depth_mm.astype(np.float32) / 1000.0
+            depth_m = in_depth.getFrame().astype(np.float32) / 1000.0
 
-        # Wait until BOTH are valid
         if rgb is None or depth_m is None:
             continue
 
-        # ---------- PREVIEW FIRST ----------
-        rgb_vis = cv2.resize(rgb, (960, 540))
-        depth_vis = np.clip(depth_m / 3.0, 0, 1)
-        depth_vis = (depth_vis * 255).astype(np.uint8)
-        depth_vis = cv2.applyColorMap(depth_vis, cv2.COLORMAP_MAGMA)
-        depth_vis = cv2.resize(depth_vis, (960, 540))
+        # Preview
+        cv2.imshow("RGB", cv2.resize(rgb, (960, 540)))
+        depth_vis = np.clip(depth_m / 1.5, 0, 1)
+        depth_vis = cv2.applyColorMap(
+            (depth_vis * 255).astype(np.uint8),
+            cv2.COLORMAP_MAGMA
+        )
+        cv2.imshow("Depth", cv2.resize(depth_vis, (960, 540)))
 
-        cv2.imshow("RGB", rgb_vis)
-        cv2.imshow("Depth", depth_vis)
-
-        # ---------- SKIP WARMUP FRAMES ----------
         if frame_id >= WARMUP_FRAMES:
             cv2.imwrite(str(rgb_dir / f"{frame_id:06d}.png"), rgb)
             np.save(str(depth_dir / f"{frame_id:06d}.npy"), depth_m)
             timestamps.append(f"{frame_id:06d} {ts:.9f}")
 
         frame_id += 1
-
-        if frame_id % 60 == 0:
-            elapsed = time.time() - t0
-            print(f"Frames: {frame_id} | FPS: {frame_id/elapsed:.1f}")
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
