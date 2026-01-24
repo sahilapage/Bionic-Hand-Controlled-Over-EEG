@@ -1,7 +1,7 @@
 import torch
 import mano
 
-# MediaPipe → MANO finger joints (robust subset, no fingertips)
+# MediaPipe → MANO finger joints 
 MP_TO_MANO = [
     2,              # thumb IP
     5, 6, 7,        # index
@@ -15,7 +15,6 @@ class MANOOptimizer:
     def __init__(self, model_path, device):
         self.device = device
 
-        # Load MANO
         self.mano = mano.load(
             model_path=model_path,
             is_rhand=True,
@@ -24,7 +23,6 @@ class MANOOptimizer:
             flat_hand_mean=False
         ).to(device)
 
-        # Optimized MANO parameters
         self.hand_pose = torch.zeros(1, 45, device=device, requires_grad=True)
         self.betas = torch.zeros(1, 10, device=device, requires_grad=True)
         self.global_orient = torch.zeros(1, 3, device=device, requires_grad=True)
@@ -38,9 +36,6 @@ class MANOOptimizer:
         self.prev_joints = None
         self.frame_count = 0
 
-    # -----------------------------
-    # Project 3D → 2D
-    # -----------------------------
     def project(self, j3d, K):
         x = j3d[:, 0]
         y = j3d[:, 1]
@@ -51,9 +46,6 @@ class MANOOptimizer:
 
         return torch.stack([u, v], dim=-1)
 
-    # -----------------------------
-    # Optimization step
-    # -----------------------------
     def step(self, j2d, depth, mask, K, iters=8):
         j2d = torch.as_tensor(j2d, device=self.device, dtype=torch.float32)
         depth = torch.as_tensor(depth, device=self.device, dtype=torch.float32)
@@ -75,7 +67,7 @@ class MANOOptimizer:
             proj_2d_fingers = proj_2d[1:]
             j2d_fingers = j2d[MP_TO_MANO]
 
-            # Dynamic alignment (robust)
+            # Dynamic alignment
             n = min(proj_2d_fingers.shape[0], j2d_fingers.shape[0])
             proj_2d_fingers = proj_2d_fingers[:n]
             j2d_fingers = j2d_fingers[:n]

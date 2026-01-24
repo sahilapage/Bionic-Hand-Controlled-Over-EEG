@@ -14,7 +14,7 @@ def main():
     detector = HandDetector()
 
     optimizer = MANOOptimizer(
-        model_path="models/mano",   # directory containing MANO_RIGHT.pkl
+        model_path="models/mano",  
         device=device
     )
 
@@ -26,7 +26,6 @@ def main():
         if rgb is None:
             break
 
-        # Show camera feed
         cv2.imshow("RGB", rgb)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
