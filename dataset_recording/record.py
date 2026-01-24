@@ -7,13 +7,11 @@ import json
 import time
 from pathlib import Path
 
-# ================= CONFIG =================
 ROOT = Path("dexmv_data")
 FPS = 30
 RGB_WIDTH = 1920
 RGB_HEIGHT = 1080
 WARMUP_FRAMES = 5
-# ========================================
 
 
 def create_session():
@@ -34,12 +32,10 @@ depth_dir = session / "depth"
 timestamps_file = session / "timestamps.txt"
 intrinsics_file = session / "intrinsics.json"
 
-print(f"📁 Recording to {session}")
+print(f" Recording to {session}")
 
-# ================= PIPELINE =================
 pipeline = dai.Pipeline()
 
-# -------- RGB CAMERA --------
 cam_rgb = pipeline.create(dai.node.ColorCamera)
 cam_rgb.setBoardSocket(dai.CameraBoardSocket.CAM_A)
 cam_rgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P)
@@ -51,7 +47,6 @@ xout_rgb = pipeline.create(dai.node.XLinkOut)
 xout_rgb.setStreamName("rgb")
 cam_rgb.video.link(xout_rgb.input)
 
-# -------- MONO CAMERAS --------
 mono_l = pipeline.create(dai.node.MonoCamera)
 mono_r = pipeline.create(dai.node.MonoCamera)
 
@@ -64,10 +59,8 @@ mono_r.setResolution(dai.MonoCameraProperties.SensorResolution.THE_400_P)
 mono_l.setFps(FPS)
 mono_r.setFps(FPS)
 
-# -------- STEREO DEPTH --------
 stereo = pipeline.create(dai.node.StereoDepth)
 
-# 🔑 CRITICAL FIXES
 stereo.setDefaultProfilePreset(
     dai.node.StereoDepth.PresetMode.HIGH_ACCURACY
 )
@@ -75,10 +68,8 @@ stereo.setDepthAlign(dai.CameraBoardSocket.CAM_A)
 stereo.setLeftRightCheck(True)
 stereo.setSubpixel(True)
 
-# Reject low-confidence hallucinations
 stereo.initialConfig.setConfidenceThreshold(200)
 
-# Safe filtering only
 stereo.initialConfig.setMedianFilter(dai.MedianFilter.KERNEL_7x7)
 
 mono_l.out.link(stereo.left)
@@ -88,10 +79,8 @@ xout_depth = pipeline.create(dai.node.XLinkOut)
 xout_depth.setStreamName("depth")
 stereo.depth.link(xout_depth.input)
 
-# ================= RUN =================
 with dai.Device(pipeline) as device:
 
-    # -------- INTRINSICS --------
     calib = device.readCalibration()
     K = calib.getCameraIntrinsics(
         dai.CameraBoardSocket.CAM_A,
@@ -111,7 +100,7 @@ with dai.Device(pipeline) as device:
     with open(intrinsics_file, "w") as f:
         json.dump(intrinsics, f, indent=2)
 
-    print("✅ Saved intrinsics")
+    print("Saved intrinsics")
 
     q_rgb = device.getOutputQueue("rgb", maxSize=4, blocking=False)
     q_depth = device.getOutputQueue("depth", maxSize=4, blocking=False)
@@ -123,7 +112,7 @@ with dai.Device(pipeline) as device:
     frame_id = 0
     t0 = time.time()
 
-    print("\n🔴 RECORDING (press 'q' to stop)\n")
+    print("\n RECORDING (press 'q' to stop)\n")
 
     while True:
         in_rgb = q_rgb.tryGet()
@@ -138,7 +127,6 @@ with dai.Device(pipeline) as device:
         if rgb is None or depth_m is None:
             continue
 
-        # Preview
         cv2.imshow("RGB", cv2.resize(rgb, (960, 540)))
         depth_vis = np.clip(depth_m / 1.5, 0, 1)
         depth_vis = cv2.applyColorMap(
@@ -160,7 +148,7 @@ with dai.Device(pipeline) as device:
     with open(timestamps_file, "w") as f:
         f.write("\n".join(timestamps))
 
-    print(f"\n✅ Done. Frames saved: {frame_id - WARMUP_FRAMES}")
+    print(f"\n Done. Frames saved: {frame_id - WARMUP_FRAMES}")
 
 cv2.destroyAllWindows()
-print("🏁 Finished cleanly.")
+print("Finished cleanly.")
