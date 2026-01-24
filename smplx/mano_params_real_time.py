@@ -6,14 +6,8 @@ import torch
 from smplx import SMPLX
 import torch.nn.functional as F
 
-# ======================================================
-# Device
-# ======================================================
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# ======================================================
-# MediaPipe
-# ======================================================
 mp_hands = mp.solutions.hands
 mp_draw  = mp.solutions.drawing_utils
 
@@ -24,9 +18,6 @@ hands = mp_hands.Hands(
     min_tracking_confidence=0.5,
 )
 
-# ======================================================
-# SMPL-X
-# ======================================================
 smplx_model = SMPLX(
     model_path="models/smplx",
     gender="neutral",
@@ -35,9 +26,6 @@ smplx_model = SMPLX(
 
 NUM_BETAS = smplx_model.num_betas  # = 16
 
-# ======================================================
-# Camera Projection Function
-# ======================================================
 def project_3d_to_2d(points_3d, fx, fy, cx, cy):
     """
     Project 3D points to 2D image coordinates
@@ -53,9 +41,6 @@ def project_3d_to_2d(points_3d, fx, fy, cx, cy):
     
     return torch.stack([u, v], dim=-1)
 
-# ======================================================
-# Depth Rendering (Simplified)
-# ======================================================
 def render_depth_map(joints_3d, depth_shape, fx, fy, cx, cy, radius=5):
     """
     Simple depth rendering by rasterizing joint positions
@@ -66,7 +51,6 @@ def render_depth_map(joints_3d, depth_shape, fx, fy, cx, cy, radius=5):
     H, W = depth_shape
     depth_render = torch.zeros((H, W), device=device)
     
-    # Project joints to 2D
     joints_2d = project_3d_to_2d(joints_3d, fx, fy, cx, cy)
     
     for i in range(joints_3d.shape[0]):
@@ -75,7 +59,6 @@ def render_depth_map(joints_3d, depth_shape, fx, fy, cx, cy, radius=5):
         z = joints_3d[i, 2].item()
         
         if 0 <= u < W and 0 <= v < H:
-            # Simple circular rasterization
             for dy in range(-radius, radius+1):
                 for dx in range(-radius, radius+1):
                     if dx*dx + dy*dy <= radius*radius:
@@ -86,32 +69,21 @@ def render_depth_map(joints_3d, depth_shape, fx, fy, cx, cy, radius=5):
     
     return depth_render
 
-# ======================================================
-# MANO-equivalent parameters
-# ======================================================
 right_hand_pose = torch.zeros(1, 45, device=device, requires_grad=True)   # θ
 betas           = torch.zeros(1, NUM_BETAS, device=device, requires_grad=True)  # β
-global_orient   = torch.zeros(1, 3, device=device, requires_grad=True)    # R (root pose)
-transl          = torch.zeros(1, 3, device=device, requires_grad=True)    # t (root translation)
+global_orient   = torch.zeros(1, 3, device=device, requires_grad=True)    # R 
+transl          = torch.zeros(1, 3, device=device, requires_grad=True)    # t 
 
-# Previous frame parameters for temporal smoothing
 prev_right_hand_pose = None
 prev_betas = None
 
-# ======================================================
-# Hyperparameters (from DexMV paper)
-# ======================================================
-LAMBDA_DEPTH = 1.0  # Increased weight for depth
-LAMBDA_TEMPORAL = 10.0  # Stronger temporal smoothing
-LAMBDA_SHAPE_REG = 5.0  # Regularization to prevent unrealistic shapes
-LAMBDA_POSE_REG = 0.1  # Regularization for pose
-PRINT_EVERY = 30
-OPT_ITERS = 20  # More iterations for better convergence
-LEARNING_RATE = 0.001  # Reduced learning rate for stability
+LAMBDA_DEPTH = 1.0  
+LAMBDA_TEMPORAL = 10.0  
+LAMBDA_SHAPE_REG = 5.0  
+LAMBDA_POSE_REG = 0.1  
+OPT_ITERS = 20  
+LEARNING_RATE = 0.001
 
-# ======================================================
-# DepthAI
-# ======================================================
 def create_pipeline():
     p = dai.Pipeline()
 
@@ -135,19 +107,16 @@ def create_pipeline():
     mono_l.setResolution(dai.MonoCameraProperties.SensorResolution.THE_400_P)
     mono_r.setResolution(dai.MonoCameraProperties.SensorResolution.THE_400_P)
 
-    # Stereo Depth - Better configuration for OAK-D Pro
+    # Stereo Depth
     stereo = p.createStereoDepth()
     
-    # Configure stereo depth properly
-    stereo.setLeftRightCheck(True)  # Required for depth alignment
+    stereo.setLeftRightCheck(True)  
     stereo.setExtendedDisparity(False)
     stereo.setSubpixel(False)
     
-    # Set depth range - important!
     stereo.initialConfig.setMedianFilter(dai.MedianFilter.KERNEL_7x7)
     stereo.initialConfig.setConfidenceThreshold(200)
     
-    # Align depth to RGB camera
     stereo.setDepthAlign(dai.CameraBoardSocket.CAM_A)
     
     mono_l.out.link(stereo.left)
@@ -159,9 +128,6 @@ def create_pipeline():
 
     return p
 
-# ======================================================
-# Main
-# ======================================================
 with dai.Device(create_pipeline()) as dev:
 
     calib = dev.readCalibration()
@@ -207,7 +173,6 @@ with dai.Device(create_pipeline()) as dev:
 
         h, w = frame.shape[:2]
         
-        # Resize depth to match RGB frame dimensions
         depth = cv2.resize(depth_raw, (w, h), interpolation=cv2.INTER_NEAREST)
         
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -231,32 +196,26 @@ with dai.Device(create_pipeline()) as dev:
                 j2d_list.append([u, v])
                 landmark_points.append((int(np.clip(u, 0, w - 1)), int(np.clip(v, 0, h - 1))))
             
-            # Create convex hull mask from landmarks for better coverage
             if len(landmark_points) > 0:
                 landmark_array = np.array(landmark_points, dtype=np.int32)
                 hull = cv2.convexHull(landmark_array)
                 cv2.fillConvexPoly(hand_mask, hull, 255)
                 
-                # Also add circles around each joint for guaranteed coverage
                 for pt in landmark_points:
                     cv2.circle(hand_mask, pt, 15, 255, -1)
 
-        # ==================================================
-        # OPTIMIZATION (DexMV Equation 1)
-        # ==================================================
+        
         if len(j2d_list) >= 12:
-            # Convert to tensors
             j2d_gt = torch.tensor(j2d_list, device=device, dtype=torch.float32).unsqueeze(0)  # (1, 21, 2)
             depth_masked = depth * (hand_mask > 0)
             depth_tensor = torch.tensor(depth_masked, device=device, dtype=torch.float32)
             
             # Estimate initial translation from depth
-            if frame_id < 5:  # Initialize in first few frames
+            if frame_id < 5: 
                 depth_values = depth_masked[hand_mask > 0]
                 if len(depth_values) > 0:
                     median_depth = np.median(depth_values[depth_values > 0.05])
                     if median_depth > 0:
-                        # Estimate hand center position
                         hand_coords = np.argwhere(hand_mask > 0)
                         center_v, center_u = np.mean(hand_coords, axis=0)
                         center_x = (center_u - cx) * median_depth / fx
@@ -267,11 +226,10 @@ with dai.Device(create_pipeline()) as dev:
                             transl[0, 1] = center_y
                             transl[0, 2] = median_depth
             
-            # Initialize optimizer for this frame
             optimizer = torch.optim.Adam(
                 [
                     {'params': right_hand_pose, 'lr': LEARNING_RATE},
-                    {'params': betas, 'lr': LEARNING_RATE * 0.1},  # Lower LR for shape
+                    {'params': betas, 'lr': LEARNING_RATE * 0.1}, 
                     {'params': global_orient, 'lr': LEARNING_RATE},
                     {'params': transl, 'lr': LEARNING_RATE}
                 ]
@@ -293,28 +251,23 @@ with dai.Device(create_pipeline()) as dev:
                     betas=betas,
                 )
 
-                # Get right hand joints (indices 40-60 for right hand in SMPL-X)
                 j3d_pred = out.joints[:, 40:61]  # (1, 21, 3)
                 j3d_pred_squeezed = j3d_pred.squeeze(0)  # (21, 3)
 
-                # Loss 1: 2D Reprojection Error (normalize by image size)
                 j2d_pred = project_3d_to_2d(j3d_pred_squeezed, fx, fy, cx, cy)
                 j2d_pred = j2d_pred.unsqueeze(0)  # (1, 21, 2)
                 
-                loss_2d = torch.mean((j2d_pred - j2d_gt) ** 2) / (w * h)  # Normalized
+                loss_2d = torch.mean((j2d_pred - j2d_gt) ** 2) / (w * h) 
 
-                # Loss 2: Depth Rendering Loss (improved with radius sampling)
                 loss_depth = 0.0
                 num_valid_depth = 0
                 j2d_pred_squeezed = j2d_pred.squeeze(0)  # (21, 2)
                 
-                # Sample depth in a small neighborhood around each joint
                 sample_radius = 5
                 for i in range(j2d_pred_squeezed.shape[0]):
                     u_center = int(torch.clamp(j2d_pred_squeezed[i, 0], 0, w-1).item())
                     v_center = int(torch.clamp(j2d_pred_squeezed[i, 1], 0, h-1).item())
                     
-                    # Collect depth values in neighborhood
                     depth_samples = []
                     for dv in range(-sample_radius, sample_radius + 1):
                         for du in range(-sample_radius, sample_radius + 1):
@@ -323,10 +276,9 @@ with dai.Device(create_pipeline()) as dev:
                             
                             if 0 <= u < w and 0 <= v < h and hand_mask[v, u] > 0:
                                 z_obs = depth_tensor[v, u].item()
-                                if 0.1 < z_obs < 2.0:  # Valid depth range for hands
+                                if 0.1 < z_obs < 2.0:  
                                     depth_samples.append(z_obs)
                     
-                    # Use median depth from neighborhood if available
                     if len(depth_samples) > 0:
                         z_observed = np.median(depth_samples)
                         z_predicted = j3d_pred_squeezed[i, 2]
@@ -338,20 +290,16 @@ with dai.Device(create_pipeline()) as dev:
                 else:
                     loss_depth = torch.tensor(0.0, device=device)
 
-                # Loss 3: Temporal Smoothing
                 loss_temporal = torch.tensor(0.0, device=device)
                 if prev_right_hand_pose is not None:
                     loss_temporal += torch.mean((right_hand_pose - prev_right_hand_pose) ** 2)
                 if prev_betas is not None:
                     loss_temporal += torch.mean((betas - prev_betas) ** 2)
 
-                # Loss 4: Shape Regularization (prevent extreme shape parameters)
                 loss_shape_reg = torch.mean(betas ** 2)
                 
-                # Loss 5: Pose Regularization (prevent extreme poses)
                 loss_pose_reg = torch.mean(right_hand_pose ** 2)
 
-                # Total Loss (Equation 1 + regularization)
                 loss = (loss_2d + 
                        LAMBDA_DEPTH * loss_depth + 
                        LAMBDA_TEMPORAL * loss_temporal +
@@ -361,7 +309,6 @@ with dai.Device(create_pipeline()) as dev:
                 loss.backward()
                 optimizer.step()
                 
-                # Track best parameters
                 if loss.item() < best_loss:
                     best_loss = loss.item()
                     best_params = {
@@ -377,20 +324,15 @@ with dai.Device(create_pipeline()) as dev:
                     print(f"  L_temporal: {loss_temporal.item():.6f}, L_shape_reg: {loss_shape_reg.item():.6f}")
                     print(f"  Valid depth points: {num_valid_depth}/21")
             
-            # Use best parameters from this frame
             if best_params is not None:
                 right_hand_pose.data.copy_(best_params['pose'])
                 betas.data.copy_(best_params['betas'])
                 global_orient.data.copy_(best_params['orient'])
                 transl.data.copy_(best_params['transl'])
 
-            # Store parameters for temporal smoothing
             prev_right_hand_pose = right_hand_pose.detach().clone()
             prev_betas = betas.detach().clone()
 
-        # ==================================================
-        # VISUALIZATION
-        # ==================================================
         if frame_id % PRINT_EVERY == 0:
             print("θ (hand pose):", right_hand_pose.detach().cpu().numpy()[0, :6], "...")
             print("β (shape):", betas.detach().cpu().numpy()[0, :4], "...")
@@ -407,7 +349,6 @@ with dai.Device(create_pipeline()) as dev:
             2
         )
         
-        # Add depth statistics
         if np.any(hand_mask > 0):
             hand_depth_values = depth[hand_mask > 0]
             valid_depth = hand_depth_values[(hand_depth_values > 0.1) & (hand_depth_values < 2.0)]
@@ -432,15 +373,12 @@ with dai.Device(create_pipeline()) as dev:
                     2
                 )
 
-        # Show hand mask overlay
         mask_display = cv2.applyColorMap((hand_mask).astype(np.uint8), cv2.COLORMAP_JET)
         combined = cv2.addWeighted(frame, 0.7, mask_display, 0.3, 0)
 
-        # Show depth map for debugging
         depth_vis = np.clip(depth * 255, 0, 255).astype(np.uint8)
         depth_colored = cv2.applyColorMap(depth_vis, cv2.COLORMAP_TURBO)
         
-        # Overlay hand mask on depth (only if mask exists)
         depth_masked_vis = depth_colored.copy()
         if np.any(hand_mask > 0):
             mask_indices = hand_mask > 0
