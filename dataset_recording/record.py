@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import depthai as dai
 import cv2
 import numpy as np
