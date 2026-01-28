@@ -1,0 +1,6 @@
+[submodule "depthai"]
+	path = depthai
+	url = https://github.com/luxonis/depthai.git
+[submodule "mano_working/mano_working/dexmv_pipeline/mano/MANO"]
+	path = mano_working/mano_working/dexmv_pipeline/mano/MANO
+	url = https://github.com/otaheri/MANO
