@@ -11,7 +11,7 @@ Extract **3D hand pose**, **MANO parameters**, **meshes**, and **Task Space Vect
    - MANO parametric hand model coefficients
    - 3D joint positions (21 keypoints)
    - 3D mesh vertices
-3. **Task Space Vectors** are computed from the 3D joints — displacement vectors from the palm to each fingertip and middle knuckle.
+3. **Task Space Vectors** are computed from the 3D joints — displacement vectors from the palm to each fingertip.
 
 ---
 
@@ -22,7 +22,7 @@ For each detected hand in an image, the script saves:
 | Output | Filename | Description |
 |---|---|---|
 | MANO parameters | `{image}_{id}_mano.npy` | Dictionary with `global_orient`, `hand_pose`, `betas`, `cam_t`, `is_right` |
-| Task Space Vectors | `{image}_{id}_tsv.npy` | 10 × 3 NumPy array (5 fingertip + 5 middle-joint vectors relative to palm) |
+| Task Space Vectors | `{image}_{id}_tsv.npy` | 5 × 3 NumPy array (5 fingertip vectors relative to palm) |
 | 3D Mesh | `{image}_{id}.obj` | Triangulated hand mesh *(optional, requires `--save_mesh`)* |
 | Overlay | `{image}_overlay.png` | Predicted mesh rendered on top of the original RGB image |
 
@@ -30,7 +30,7 @@ For each detected hand in an image, the script saves:
 
 ## Task Space Vectors (TSVs)
 
-The TSV representation is adopted from the **[DexMV](https://yzqin.github.io/dexmv/)** paper (*DexMV: Imitation Learning for Dexterous Manipulation from Human Videos*). TSVs are 3D displacement vectors from the palm (wrist joint) to each fingertip and middle knuckle, producing a compact **10 × 3** matrix per hand that captures the full finger configuration in a pose-invariant way. This is the same representation used in DexMV to transfer human hand poses to dexterous robot hands.
+The TSV representation is adopted from the **[DexMV](https://yzqin.github.io/dexmv/)** paper (*DexMV: Imitation Learning for Dexterous Manipulation from Human Videos*). TSVs are 3D displacement vectors from the palm (wrist joint) to each fingertip, producing a compact **5 × 3** matrix per hand that captures the finger configuration in a pose-invariant way. This is the same representation used in DexMV to transfer human hand poses to dexterous robot hands.
 
 ---
 

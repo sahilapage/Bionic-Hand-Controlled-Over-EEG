@@ -15,14 +15,12 @@ from hamer.utils.renderer import Renderer, cam_crop_to_full
 
 PALM_ID = 0
 FINGERTIP_IDS = [4, 8, 12, 16, 20]
-MIDDLE_IDS = [3, 7, 11, 15, 19]
 
 def compute_tsvs(joints_3d):
     palm = joints_3d[PALM_ID]
     tsvs = []
-    for tip, mid in zip(FINGERTIP_IDS, MIDDLE_IDS):
+    for tip in FINGERTIP_IDS:
         tsvs.append(joints_3d[tip] - palm)
-        tsvs.append(joints_3d[mid] - palm)
     return np.stack(tsvs)
 
 LIGHT_BLUE = (0.65, 0.74, 0.86)
