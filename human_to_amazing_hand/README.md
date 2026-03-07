@@ -319,7 +319,7 @@ In HAMER's frame, **fingers point in −Y** from the palm. `|tsv[i]|` (vector le
 ## Architecture
 
 ```
-tsv_retarget_sim.py
+retarget.py
 │
 ├── calibrate()          # Auto-measures Jacobian + Z ranges at startup
 │   ├── settle()         # Resets sim, applies ctrl, runs N physics steps
