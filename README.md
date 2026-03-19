@@ -2,6 +2,10 @@
 
 Control the [Pollen Robotics Amazing Hand](https://www.pollen-robotics.com/) robot using **EEG brain signals** and **behavioral cloning**.
 
+<p align="center">
+  <img src="assets/image.png" width="48%" />
+</p>
+
 ## Pipeline
 
 1. **EEG Processing** (`eeg/`) — Read brain signals via Arduino, stream over LSL, classify activity state
@@ -26,3 +30,6 @@ python hand_pose/extract_tsv.py --img_folder path/to/images --out_folder poses/
 - **`human_to_amazing_hand/`** — Pose retargeting to Amazing Hand (4-finger robot)
 - **`dataset_recording/`** — OAK-D RGB-D camera sync recorder
 - **`mjcf/`** — MuJoCo robot model (Amazing Hand + arm)
+
+
+[def]: ssets/image.pn
