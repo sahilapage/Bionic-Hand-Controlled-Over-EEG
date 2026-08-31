@@ -1,2 +1,36 @@
-build
-sdkconfig
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Training output: models, tensorboard logs, replay buffers, W&B state.
+# `runs/` is where sohand.rl.train_sac writes by default; the replay-buffer
+# rule catches a --run-dir pointed somewhere else, since those files are
+# gigabytes.
+runs/
+wandb/
+*_buffer.pkl
+
+# Trained policy weights. Fetched from the GitHub Release rather than tracked
+# here -- binaries that git cannot diff do not belong in a source tree, and a
+# clone should not pay for them:
+#     python -m sohand.rl.fetch
+# `gait_cem.npy` is deliberately NOT ignored: it is 320 bytes of open-loop
+# sinusoid coefficients, and the baseline is worthless if it drifts from the
+# code that quotes its score.
+checkpoints/*.npz
+
+# Recorded data
+recordings/
+demo_out/
+poses/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store

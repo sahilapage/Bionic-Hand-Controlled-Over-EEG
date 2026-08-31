@@ -1,0 +1,138 @@
+"""Generate a scene with the cube resized and repositioned for fingertip contact.
+
+    python -m sohand.rl.make_scene                    # writes mjcf/cube/scene_spin.xml
+    python -m sohand.rl.make_scene --scale 1.0 --dy 0 # back to the shipped geometry
+
+WHY THIS EXISTS
+---------------
+Measured on the shipped scene: the fingertips never touch
+the cube. They sit 1.5-7 cm from its surface and every contact is borne by
+mid-chain linkage bodies -- for finger1, by `rotule_ball_2` and `ball_link` at
+depth 0-1, which is the knuckle. The cube rests in the knuckle pocket because
+the fingers curl ~6.5 cm past it.
+
+A kinematic sweep over size x position found the fix is not size
+alone. Holding y fixed, growing the cube stops helping past ~6 cm -- it just
+drives fingers 2/3 into penetration while finger1 and the thumb fall further
+behind. The missing axis was y: the finger row spans y = -0.020 .. +0.052
+(centre +0.016) while the cube sat at y = -0.001, biased toward finger3.
+
+    config                        worst tip   per-finger tip->surface (cm)
+    shipped  4.7cm  0,0,0            4.47     [4.5  3.8  3.9  4.4]
+    v2       6.1cm  -2.0,+1.7,+2.0   1.86     [1.9  1.2  1.6  1.7]
+    (closest) 6.1cm -3.5,+2.5,+2.0   1.16     [0.7 -0.2  0.5  1.2]
+
+v2 is chosen over "closest" for EVENNESS: 0.61 cm spread between best and worst
+finger, against 1.38 cm. Confirmed dynamically -- per-finger participation
+spread under random actions collapses from 0.894 to 0.139.
+
+WHAT ACTUALLY SHIPS. The defaults below apply the y shift only (dx = dz = 0),
+which is the geometry `mjcf/cube/scene_spin.xml` holds and the one the run 2
+checkpoint was trained against. Measured over 20 resets after the grasp settle,
+that takes the worst tip-to-surface gap from 6.6 to 5.1 cm, the best-to-worst
+spread from 3.0 to 2.2 cm, and thumb contact from 0.00 to 0.85 -- y was the
+axis that mattered. Changing any default changes the task; the header written
+into the output records exactly which arguments produced it.
+
+MuJoCo IGNORES `size` on a mesh geom, so the only way to resize the cube is the
+mesh asset's `scale`. Mass scales with s^3 and inertia with s^5; the inertial
+offset (which is the cube's true geometric centre) scales linearly.
+"""
+
+import argparse
+import os
+import re
+
+from sohand.paths import MJCF_DIR
+
+CUBE_DIR = os.path.join(MJCF_DIR, "cube")
+
+
+def build(scale, dx, dy, dz, keep_mass=True):
+    src = open(os.path.join(CUBE_DIR, "scene.xml")).read()
+
+    s = src.replace('<mesh name="cube_mesh" file="cube.stl"/>',
+                    f'<mesh name="cube_mesh" file="cube.stl" '
+                    f'scale="{scale} {scale} {scale}"/>')
+    if s == src and scale != 1.0:
+        raise RuntimeError("mesh asset line not found; scene.xml layout changed")
+
+    n = [0]
+
+    def move(m):
+        n[0] += 1
+        return (f'<body name="cube" pos="{float(m.group(1)) + dx:.5f} '
+                f'{float(m.group(2)) + dy:.5f} {float(m.group(3)) + dz:.5f}">')
+
+    s = re.sub(r'<body name="cube" pos="([-\d.]+) ([-\d.]+) ([-\d.]+)">', move, s)
+    if n[0] != 1:
+        raise RuntimeError(f"expected exactly one cube body, matched {n[0]}")
+
+    # A solid cube of the same material scales as s^3: 4.7 -> 6.1 cm takes it
+    # from 71 g to 156 g, which is a lot for 3.23 Nm servos. keep_mass models a
+    # hollow shell instead -- same weight, larger size -- and inertia then
+    # scales as s^2 rather than s^5.
+    mscale = 1.0 if keep_mass else scale ** 3
+    iscale = scale ** 2 if keep_mass else scale ** 5
+
+    def inertial(m):
+        return (f'<inertial pos="{float(m.group(1))*scale:.6f} '
+                f'{float(m.group(2))*scale:.6f} {float(m.group(3))*scale:.6f}" '
+                f'mass="{float(m.group(4))*mscale:.6f}" '
+                f'diaginertia="{float(m.group(5))*iscale:.6e} '
+                f'{float(m.group(6))*iscale:.6e} {float(m.group(7))*iscale:.6e}"/>')
+
+    inertial_re = (r'<inertial pos="([-\d.]+) ([-\d.]+) ([-\d.]+)" '
+                   r'mass="([\d.]+)" diaginertia='
+                   r'"([\deE.\-+]+) ([\deE.\-+]+) ([\deE.\-+]+)"/>')
+    s2 = re.sub(inertial_re, inertial, s)
+    if s2 == s:
+        raise RuntimeError("cube <inertial> not found; cannot rescale mass/inertia")
+    s = s2
+
+    # the AprilTag decals are children of the cube body and positioned in its
+    # frame, so they have to move with the mesh or they float off the faces
+    def tag(m):
+        return (f'{m.group(1)}pos="{float(m.group(2))*scale:.5f} '
+                f'{float(m.group(3))*scale:.5f} {float(m.group(4))*scale:.5f}"')
+
+    s = re.sub(r'(<geom name="tag_number_\d" type="box" )'
+               r'pos="([-\d.]+) ([-\d.]+) ([-\d.]+)"', tag, s)
+
+    # The mass flag has to appear here. The original header recorded only the
+    # scale and offsets, so re-running the command it printed produced a 156 g
+    # cube where the trained scene has a 71 g one -- a different task.
+    mass_flag = " --keep-mass" if keep_mass else " --scale-mass"
+    header = (f"<!-- GENERATED by sohand.rl.make_scene -- do not edit by hand.\n"
+              f"     cube scale {scale} ({4.7 * scale:.1f} cm), offset "
+              f"dx={dx:+.3f} dy={dy:+.3f} dz={dz:+.3f} m, "
+              f"{'hollow shell (mass held)' if keep_mass else 'solid (mass scaled)'}.\n"
+              f"     Regenerate with: python -m sohand.rl.make_scene "
+              f"--scale {scale} --dx {dx} --dy {dy} --dz {dz}{mass_flag} -->\n")
+    return header + s
+
+
+if __name__ == "__main__":
+    p = argparse.ArgumentParser()
+    # Defaults reproduce the shipped `scene_spin.xml` byte for byte, so the
+    # geometry the run-2 checkpoint was trained on is the one you get.
+    p.add_argument("--scale", type=float, default=1.3)
+    p.add_argument("--dx", type=float, default=0.0)
+    p.add_argument("--dy", type=float, default=0.017)
+    p.add_argument("--dz", type=float, default=0.0)
+    # Both spellings exist so the command the header records is runnable
+    # verbatim, whichever way the mass was handled.
+    mass = p.add_mutually_exclusive_group()
+    mass.add_argument("--keep-mass", dest="keep_mass", action="store_true",
+                      help="hollow shell: mass stays at the 4.7 cm cube's 71 g "
+                           "(the default)")
+    mass.add_argument("--scale-mass", dest="keep_mass", action="store_false",
+                      help="solid cube: mass scales as s^3, 71 g -> 156 g at "
+                           "1.3x, which is a lot for 3.23 Nm servos")
+    p.set_defaults(keep_mass=True)
+    p.add_argument("--out", default=os.path.join(CUBE_DIR, "scene_spin.xml"))
+    a = p.parse_args()
+    open(a.out, "w").write(build(a.scale, a.dx, a.dy, a.dz, a.keep_mass))
+    print(f"wrote {a.out}  (cube {4.7 * a.scale:.1f} cm, "
+          f"dx {a.dx:+.3f} dy {a.dy:+.3f} dz {a.dz:+.3f}, "
+          f"{'mass held' if a.keep_mass else 'mass scaled'})")

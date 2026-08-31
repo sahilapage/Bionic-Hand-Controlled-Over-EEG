@@ -1,0 +1,73 @@
+<mujoco model="scene">
+    <include file="robot.xml" />
+    <option gravity="0 0 -9.81"/>
+    <size njmax="3000" nconmax="1000"/>
+
+    <visual>
+        <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0" />
+        <rgba haze="0.15 0.25 0.35 1" />
+        <global azimuth="160" elevation="-20" />
+    </visual>
+
+    <visual>
+        <global offwidth="1080" offheight="1080"/>
+    </visual>
+
+    <asset>
+        <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072" />
+        <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.655 0.627 0.580" rgb2=" 0.655 0.627 0.580" markrgb="0.655 0.627 0.580" width="300" height="300" />
+        <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.000" />
+        <mesh name="cube_mesh" file="cube.stl"/>
+
+        <texture name="tag_tex_0" type="2d" file="tag36h11_00.png"/>
+        <material name="tag_mat_0" texture="tag_tex_0" texrepeat="1 1" texuniform="false" specular="0" shininess="0"/>
+        <texture name="tag_tex_1" type="2d" file="tag36h11_01.png"/>
+        <material name="tag_mat_1" texture="tag_tex_1" texrepeat="1 1" texuniform="false" specular="0" shininess="0"/>
+        <texture name="tag_tex_2" type="2d" file="tag36h11_02.png"/>
+        <material name="tag_mat_2" texture="tag_tex_2" texrepeat="1 1" texuniform="false" specular="0" shininess="0"/>
+        <texture name="tag_tex_3" type="2d" file="tag36h11_03.png"/>
+        <material name="tag_mat_3" texture="tag_tex_3" texrepeat="1 1" texuniform="false" specular="0" shininess="0"/>
+        <texture name="tag_tex_4" type="2d" file="tag36h11_04.png"/>
+        <material name="tag_mat_4" texture="tag_tex_4" texrepeat="1 1" texuniform="false" specular="0" shininess="0"/>
+        <texture name="tag_tex_5" type="2d" file="tag36h11_05.png"/>
+        <material name="tag_mat_5" texture="tag_tex_5" texrepeat="1 1" texuniform="false" specular="0" shininess="0"/>
+    </asset>
+
+    <worldbody>
+        <light pos="0 0 3.5" dir="0 0 -1" directional="true" />
+        <geom name="floor" size="0 0 0.05" pos="0 0 -0.2" type="plane" material="groundplane" />
+
+
+        <body name="cube" pos="-0.09 0.027 0.04">
+            <freejoint name ="cube_joint"/>
+            <inertial pos="-0.0028 -0.035 0.0011" mass="0.071" diaginertia="2.9583e-05 2.9583e-05 2.9583e-05"/>
+            <geom
+                type="mesh"
+                mesh="cube_mesh"
+                size="0.0235 0.0235 0.0235"
+                mass="0.071"
+                contype="5"
+                conaffinity="5"
+                friction="1.0 0.005 0.0001"
+                rgba="1 1 1 1"/>
+
+            <geom name="tag_number_5" type="box" pos="-0.02 -0.035 0.025" size="0.005 0.005 0.0001" material="tag_mat_5" rgba="1 1 1 1" contype="0" conaffinity="0"/>
+            <geom name="tag_number_0" type="box" pos="-0.02 -0.035 -0.025" size="0.005 0.005 0.0001" material="tag_mat_0" rgba="1 1 1 1" contype="0" conaffinity="0"/>
+            <geom name="tag_number_1" type="box" pos="0.025 -0.055 -0.0" size="0.005 0.005 0.0001" quat="0.7071068 0 0.7071068 0" material="tag_mat_1" rgba="1 1 1 1" contype="0" conaffinity="0"/>
+            <geom name="tag_number_3" type="box" pos="-0.025 -0.015 -0.0" size="0.005 0.005 0.0001" quat="0.7071068 0 -0.7071068 0" material="tag_mat_3" rgba="1 1 1 1" contype="0" conaffinity="0"/>
+            <geom name="tag_number_4" type="box" pos="0.02 -0.01 -0.0" size="0.005 0.005 0.0001" quat="0.7071068 -0.7071068 0 0" material="tag_mat_4" rgba="1 1 1 1" contype="0" conaffinity="0"/>
+            <geom name="tag_number_2" type="box" pos="-0.02 -0.06 -0.0" size="0.005 0.005 0.0001" quat="0.7071068 0.7071068 0 0" material="tag_mat_2" rgba="1 1 1 1" contype="0" conaffinity="0"/>
+
+        </body>
+    </worldbody>
+
+    <worldbody>
+        <camera name="tracking_camera" pos="-0.133 -0.005 0.237" xyaxes="0.159 -0.987 0.000 0.968 0.156 0.197"/>
+    </worldbody>
+   
+    <keyframe>
+        <key name="hand_slightly_closed"
+             qpos="0.279253 1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.279253 1.000000 0.000000 0.000000 0.000000 0.279253 1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.279253 1.000000 0.000000 0.000000 0.000000 0.279253 1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.279253 1.000000 0.000000 0.000000 0.000000 0.279253 1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.279253 1.000000 0.000000 0.000000 0.000000 -0.070000 0.033000 0.030000 1.000000 0.000000 0.000000 0.000000"
+             ctrl="0.279253 0.279253 0.279253 0.279253 0.279253 0.279253 0.279253 0.279253"/>
+    </keyframe>
+</mujoco>

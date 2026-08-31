@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sohand"
+version = "0.2.0"
+description = "Dexterous manipulation, retargeting and EEG for the Pollen Robotics Amazing Hand"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Sahil Apage" }]
+keywords = ["robotics", "dexterous-manipulation", "reinforcement-learning",
+            "mujoco", "eeg", "hand-pose"]
+
+# Everything needed to load the models and run a trained policy. Training,
+# perception and EEG each add their own extras below, so a machine that only
+# replays a policy never installs torch.
+dependencies = [
+    "numpy>=1.23",
+    "mujoco>=3.0",
+    "gymnasium>=0.29",
+]
+
+[project.optional-dependencies]
+train = ["stable-baselines3>=2.3", "torch>=2.0", "tensorboard", "wandb", "imageio"]
+perception = ["opencv-python", "mediapipe", "tqdm", "torch>=2.0", "depthai"]
+eeg = ["pyserial", "pylsl", "scipy>=1.10", "pyqtgraph", "PyQt5"]
+
+[project.urls]
+Repository = "https://github.com/sahilapage/so-hand"
+
+# The MuJoCo models, checkpoints and firmware are repository data, not package
+# data: `sohand.paths` resolves them relative to the checkout. Install editable
+# (`pip install -e .`), or point SOHAND_ROOT at the checkout.
+[tool.setuptools.packages.find]
+include = ["sohand*"]
